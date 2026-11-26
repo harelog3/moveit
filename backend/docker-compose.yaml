@@ -1,4 +1,4 @@
-# Local development infrastructure only. The Go app runs on the host (`just run`).
+# Local development infrastructure only. The Go app runs on the host (`just api run`).
 services:
   postgres:
     image: postgres:17

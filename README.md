@@ -32,9 +32,11 @@ A **Go** rewrite of [mov-e-backend](https://github.com/Harel-ITESO/mov-e-backend
 
 ```
 moveit/
-├── Justfile   # 🛠️ Project commands
-├── backend/   # 🐹 Go API + infrastructure docker-compose
-│   └── cmd/api/   # API entrypoint
+├── Justfile          # 🛠️ Root of the project commands (loads the modules)
+├── backend/          # 🐹 Go API + infrastructure docker-compose
+│   ├── api.just      # `just api ...` recipes
+│   ├── infra.just    # `just infra ...` recipes
+│   └── cmd/api/      # API entrypoint
 └── frontend/  # 🖥️ (pending)
 ```
 
@@ -44,13 +46,13 @@ Requirements: Go, Docker and [just](https://github.com/casey/just).
 
 ```bash
 # 1. Start the infrastructure (PostgreSQL, s3mock and Mailpit) 🐳
-just infra-up
+just infra up
 
 # 2. Set up the environment variables 🔐
 cp backend/.env.example backend/.env   # add your TMDB_API_KEY
 
 # 3. Run the API ▶️
-just run
+just api run
 ```
 
 | Service | URL |
@@ -62,19 +64,19 @@ just run
 
 ## 🛠️ Commands
 
-Run `just` from the repo root to list every recipe.
+Run `just` from the repo root to list every recipe. Recipes are grouped in modules: `just <module> <recipe>`.
 
 | Recipe | What it does |
 | --- | --- |
-| `just run` | Runs the API with `go run`, loading `backend/.env` |
-| `just build` | Builds the binary into `backend/bin/moveit` |
-| `just exec` | Runs the compiled binary, loading `backend/.env` |
-| `just get <pkg>` | Adds a Go package to the API |
-| `just infra-up` | Starts the containers |
-| `just infra-stop` | Stops the containers without removing them |
-| `just infra-down` | Removes the containers and network (keeps data) |
-| `just infra-destroy` | Removes containers, images, volumes and networks (⚠️ deletes the database data) |
-| `just infra-reset` | `infra-destroy` + `infra-up` |
+| `just api run` | Runs the API with `go run`, loading `backend/.env` |
+| `just api build` | Builds the binary into `backend/bin/moveit` |
+| `just api exec` | Runs the compiled binary, loading `backend/.env` |
+| `just api get <pkg>` | Adds a Go package to the API |
+| `just infra up` | Starts the containers |
+| `just infra stop` | Stops the containers without removing them |
+| `just infra down` | Removes the containers and network (keeps data) |
+| `just infra destroy` | Removes containers, images, volumes and networks (⚠️ deletes the database data) |
+| `just infra reset` | `infra destroy` + `infra up` |
 
 ## 🗃️ Data model
 
