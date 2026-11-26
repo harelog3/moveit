@@ -15,6 +15,7 @@ A **Go** rewrite of [mov-e-backend](https://github.com/Harel-ITESO/mov-e-backend
 | 🎞️ Movie data | [TMDB API](https://developer.themoviedb.org/) |
 | 🛠️ Task runner | [just](https://github.com/casey/just) |
 | 🐘 Migrations | [goose](https://pressly.github.io/goose/) |
+| 🧬 Queries | [sqlc](https://sqlc.dev/) (generated Go code) |
 | 🖥️ Frontend | Coming soon to this same repo |
 
 ## 🔄 Original vs. rewrite
@@ -44,7 +45,7 @@ moveit/
 
 ## 🚀 Getting started
 
-Requirements: Go, Docker, [just](https://github.com/casey/just) and [goose](https://pressly.github.io/goose/) (`brew install goose`).
+Requirements: Go, Docker, [just](https://github.com/casey/just), [goose](https://pressly.github.io/goose/) and [sqlc](https://sqlc.dev/) (`brew install goose sqlc`).
 
 ```bash
 # 1. Start the infrastructure (PostgreSQL, s3mock and Mailpit) 🐳
@@ -91,6 +92,7 @@ Run `just` from the repo root to list every recipe. Recipes are grouped in modul
 | `just db status` | Shows applied and pending migrations |
 | `just db version` | Prints the current database version |
 | `just db validate` | Checks the migration files without touching the database |
+| `just db gen` | Generates Go code from `backend/db/queries` into `backend/internal/db` with sqlc |
 
 ## 🗃️ Data model
 

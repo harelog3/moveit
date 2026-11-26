@@ -1,5 +1,6 @@
-# 🐘 Database migration recipes, powered by goose (https://pressly.github.io/goose/).
-# Requires the goose CLI (`brew install goose`) and reads DATABASE_URL from backend/.env.
+# 🐘 Database recipes: migrations with goose (https://pressly.github.io/goose/)
+# and code generation with sqlc (https://sqlc.dev/).
+# Requires the goose and sqlc CLIs (`brew install goose sqlc`). Migrations read DATABASE_URL from backend/.env.
 
 # Module recipes run from this file's directory (backend/just/), so move up to backend/.
 set working-directory := '..'
@@ -51,3 +52,9 @@ version: (goose "version")
 # Checks the migration files without touching the database
 validate: (goose "validate")
     @echo "✅ Migrations are valid"
+
+# Generates Go code from db/queries into internal/db with sqlc (see sqlc.yaml)
+gen:
+    @echo "⚙️  Generating sqlc code into internal/db..."
+    @sqlc generate
+    @echo "✅ Code generated"

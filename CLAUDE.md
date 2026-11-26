@@ -29,7 +29,7 @@ Monorepo:
 Common tasks are `just` recipes, run from the repo root (`just` lists them). The root `Justfile` only loads modules from `backend/just/`. just runs module recipes from the module file's directory, so each module sets `set working-directory := '..'` to run inside `backend/`:
 
 - `backend/just/api.just` → `just api <recipe>`
-- `backend/just/db.just` → `just db <recipe>` (goose migrations)
+- `backend/just/db.just` → `just db <recipe>` (goose migrations, sqlc codegen)
 - `backend/just/infra.just` → `just infra <recipe>`
 
 ```bash
@@ -40,6 +40,7 @@ just api exec                 # run the built binary, loading backend/.env
 just db new <name>            # create a SQL migration in backend/db/migrations
 just db up                    # apply pending migrations
 just db status                # show applied and pending migrations
+just db gen                   # generate Go code with sqlc into backend/internal/db
 ```
 
 Checks, run from `backend/`:
