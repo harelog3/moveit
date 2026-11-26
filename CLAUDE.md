@@ -37,7 +37,7 @@ just infra up                 # start Postgres, s3mock, Mailpit
 just api run                  # run the API (cmd/api), loading backend/.env
 just api build                # build the binary into backend/bin/moveit
 just api exec                 # run the built binary, loading backend/.env
-just db new <name>            # create a SQL migration in backend/internal/db/migrations
+just db new <name>            # create a SQL migration in backend/db/migrations
 just db up                    # apply pending migrations
 just db status                # show applied and pending migrations
 ```
@@ -58,7 +58,7 @@ gofmt -l .                    # must print nothing
 - `context.Context` is the first parameter of anything that does I/O.
 - Wrap errors with `fmt.Errorf("doing x: %w", err)`, map domain errors to HTTP status codes at the handler layer, and never leak internal errors to clients.
 - Load config from environment variables once at startup and fail fast on missing required values. `backend/.env.example` documents them.
-- Write schema changes as goose SQL migrations in `backend/internal/db/migrations` (`just db new <name>`). Never mutate the schema ad hoc.
+- Write schema changes as goose SQL migrations in `backend/db/migrations` (`just db new <name>`). sqlc reads them as the schema and generates code from `backend/db/queries` into `backend/internal/db` (`backend/sqlc.yaml`). Never mutate the schema ad hoc.
 - Write table-driven tests with `testing`. Test handlers with `httptest`.
 - Validate request input explicitly (the original relied on class-validator with whitelist and forbidNonWhitelisted, so reject unknown JSON fields).
 

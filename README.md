@@ -36,7 +36,8 @@ moveit/
 ├── Justfile          # 🛠️ Root of the project commands (loads the modules)
 ├── backend/          # 🐹 Go API + infrastructure docker-compose
 │   ├── just/         # just modules: api.just, db.just, infra.just
-│   ├── internal/db/migrations/  # goose SQL migrations
+│   ├── db/migrations/  # goose SQL migrations (also the sqlc schema)
+│   ├── sqlc.yaml       # sqlc config: db/queries → internal/db
 │   └── cmd/api/      # API entrypoint
 └── frontend/  # 🖥️ (pending)
 ```
@@ -81,7 +82,7 @@ Run `just` from the repo root to list every recipe. Recipes are grouped in modul
 | `just infra down` | Removes the containers and network (keeps data) |
 | `just infra destroy` | Removes containers, images, volumes and networks (⚠️ deletes the database data) |
 | `just infra reset` | `infra destroy` + `infra up` |
-| `just db new <name>` | Creates a SQL migration in `backend/internal/db/migrations` |
+| `just db new <name>` | Creates a SQL migration in `backend/db/migrations` |
 | `just db up` | Applies every pending migration |
 | `just db up-one` | Applies only the next pending migration |
 | `just db down` | Rolls back the last migration |

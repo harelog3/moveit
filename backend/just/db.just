@@ -5,7 +5,7 @@
 set working-directory := '..'
 
 # Migrations directory (relative to backend/)
-migrations := "internal/db/migrations"
+migrations := "db/migrations"
 
 # Runs goose against the database in backend/.env
 [private]
@@ -14,7 +14,7 @@ goose +args:
         GOOSE_DRIVER=postgres GOOSE_DBSTRING="$DATABASE_URL" GOOSE_MIGRATION_DIR={{ migrations }} \
         goose {{ args }}
 
-# Creates a new SQL migration in internal/db/migrations (sequential numbering)
+# Creates a new SQL migration in db/migrations (sequential numbering)
 new name:
     @echo "📝 Creating migration {{ name }}..."
     @mkdir -p {{ migrations }}
@@ -38,6 +38,7 @@ redo: (goose "redo")
     @echo "🔁 Last migration redone"
 
 # Rolls back every migration (⚠️ drops the schema data)
+[confirm("⚠️ This drops the whole schema. Do you wish to continue?")]
 reset: (goose "reset")
     @echo "💣 All migrations rolled back"
 
