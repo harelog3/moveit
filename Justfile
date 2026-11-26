@@ -1,75 +1,83 @@
-# 🎬 MoveIT: comandos del proyecto
-# Uso: `just` lista las recetas, `just <receta>` ejecuta una.
+# 🎬 MoveIT: project commands
+# Usage: `just` lists the recipes, `just <recipe>` runs one.
 
 set default-list
 
-# Nombre y ruta del binario (relativa a backend/)
+# Binary name and path (relative to backend/)
 bin := "bin/moveit"
 
 # ─────────────────────────────────────────────
-# 🚀 App
+# 🚀 API
 # ─────────────────────────────────────────────
 
-# Corre la API con go run, cargando backend/.env
+# Runs the API with go run, loading backend/.env
 [group('api')]
 [working-directory('backend')]
 run:
-    @echo "🚀 Corriendo proyecto..."
+    @echo "🚀 Running project..."
     @set -a && . ./.env && set +a && go run ./cmd/api
 
-# Compila el binario en backend/bin/
+# Builds the binary into backend/bin/
 [group('api')]
 [working-directory('backend')]
 build:
-    @echo "🔨 Compilando binario en backend/{{ bin }}..."
+    @echo "🔨 Building binary into backend/{{ bin }}..."
     @go build -o {{ bin }} ./cmd/api
-    @echo "✅ Binario listo"
+    @echo "✅ Binary ready"
 
-# Ejecuta el binario compilado, cargando backend/.env
+# Runs the compiled binary, loading backend/.env
 [group('api')]
 [working-directory('backend')]
 exec:
-    @test -x {{ bin }} || { echo "❌ No existe backend/{{ bin }}, corre 'just build' primero"; exit 1; }
-    @echo "▶️  Ejecutando binario..."
+    @test -x {{ bin }} || { echo "❌ backend/{{ bin }} not found, run 'just build' first"; exit 1; }
+    @echo "▶️  Running binary..."
     @set -a && . ./.env && set +a && ./{{ bin }}
+
+# Adds a package to the API project
+[group('api')]
+[working-directory('backend')]
+get name:
+    @echo "📦 Adding package {{ name }} to API..."
+    @go get {{ name }}
+    @echo "✅ Package added"
 
 # ─────────────────────────────────────────────
 # 🐳 Infra (docker compose: Postgres, s3mock, Mailpit)
 # ─────────────────────────────────────────────
 
-# Levanta los contenedores en segundo plano
+# Starts the containers in the background
 [group('infra')]
 [working-directory('backend')]
 infra-up:
-    @echo "🐳 Levantando infraestructura..."
+    @echo "🐳 Starting infrastructure..."
     @docker compose up -d
-    @echo "✅ Infra arriba: Postgres :5432, s3mock :9090, Mailpit :8025"
+    @echo "✅ Infra up: Postgres :5432, s3mock :9090, Mailpit :8025"
 
-# Detiene los contenedores sin eliminarlos
+# Stops the containers without removing them
 [group('infra')]
 [working-directory('backend')]
 infra-stop:
-    @echo "⏸️  Deteniendo contenedores..."
+    @echo "⏸️  Stopping containers..."
     @docker compose stop
-    @echo "✅ Contenedores detenidos"
+    @echo "✅ Containers stopped"
 
-# Elimina los contenedores y la red (conserva volúmenes e imágenes)
+# Removes the containers and network (keeps volumes and images)
 [group('infra')]
 [working-directory('backend')]
 infra-down:
-    @echo "🧹 Eliminando contenedores..."
+    @echo "🧹 Removing containers..."
     @docker compose down
-    @echo "✅ Contenedores eliminados"
+    @echo "✅ Containers removed"
 
-# Elimina todo lo de este compose: contenedores, imágenes, volúmenes y redes
+# Removes everything from this compose: containers, images, volumes and networks
 [group('infra')]
 [working-directory('backend')]
 infra-destroy:
-    @echo "💣 Destruyendo infraestructura (contenedores, imágenes, volúmenes, redes)..."
+    @echo "💣 Destroying infrastructure (containers, images, volumes, networks)..."
     @docker compose down --rmi all --volumes --remove-orphans
-    @echo "✅ Infra destruida"
+    @echo "✅ Infra destroyed"
 
-# Destruye todo y vuelve a levantar desde cero
+# Destroys everything and starts again from scratch
 [group('infra')]
 infra-reset: infra-destroy infra-up
-    @echo "🔄 Infra reiniciada desde cero"
+    @echo "🔄 Infra reset from scratch"
