@@ -1,5 +1,7 @@
 # 🐳 Local infrastructure recipes (backend/docker-compose.yaml).
-# They run from backend/ (this file's directory), so docker compose finds the file.
+
+# Module recipes run from this file's directory (backend/just/), so move up to backend/.
+set working-directory := '..'
 
 # Starts the containers in the background
 up:

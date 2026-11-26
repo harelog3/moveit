@@ -26,16 +26,20 @@ Monorepo:
 
 ## Commands
 
-Common tasks are `just` recipes, run from the repo root (`just` lists them). The root `Justfile` only loads modules; each module file runs its recipes from its own directory:
+Common tasks are `just` recipes, run from the repo root (`just` lists them). The root `Justfile` only loads modules from `backend/just/`. just runs module recipes from the module file's directory, so each module sets `set working-directory := '..'` to run inside `backend/`:
 
-- `backend/api.just` → `just api <recipe>`
-- `backend/infra.just` → `just infra <recipe>`
+- `backend/just/api.just` → `just api <recipe>`
+- `backend/just/db.just` → `just db <recipe>` (goose migrations)
+- `backend/just/infra.just` → `just infra <recipe>`
 
 ```bash
 just infra up                 # start Postgres, s3mock, Mailpit
 just api run                  # run the API (cmd/api), loading backend/.env
 just api build                # build the binary into backend/bin/moveit
 just api exec                 # run the built binary, loading backend/.env
+just db new <name>            # create a SQL migration in backend/internal/db/migrations
+just db up                    # apply pending migrations
+just db status                # show applied and pending migrations
 ```
 
 Checks, run from `backend/`:
@@ -49,12 +53,12 @@ gofmt -l .                    # must print nothing
 ## Go conventions
 
 - Prefer the standard library: `net/http` with `ServeMux` method and path patterns (`GET /v1/api/movies/{id}`), `log/slog`, `database/sql` or pgx. Add a dependency only when it clearly pays off.
-- Put application code under `backend/internal/<domain>` (e.g. `auth`, `user`, `movie`, `rating`, `follow`, `profile`, `file`), with shared infra in packages like `internal/config`, `internal/database`, `internal/mail`, `internal/storage`, `internal/tmdb`.
+- Put application code under `backend/internal/<domain>` (e.g. `auth`, `user`, `movie`, `rating`, `follow`, `profile`, `file`), with shared infra in packages like `internal/config`, `internal/db`, `internal/mail`, `internal/storage`, `internal/tmdb`.
 - Use dependency injection through constructors. No package-level mutable state and no `init()` side effects.
 - `context.Context` is the first parameter of anything that does I/O.
 - Wrap errors with `fmt.Errorf("doing x: %w", err)`, map domain errors to HTTP status codes at the handler layer, and never leak internal errors to clients.
 - Load config from environment variables once at startup and fail fast on missing required values. `backend/.env.example` documents them.
-- Write schema changes as SQL migrations. Never mutate the schema ad hoc.
+- Write schema changes as goose SQL migrations in `backend/internal/db/migrations` (`just db new <name>`). Never mutate the schema ad hoc.
 - Write table-driven tests with `testing`. Test handlers with `httptest`.
 - Validate request input explicitly (the original relied on class-validator with whitelist and forbidNonWhitelisted, so reject unknown JSON fields).
 

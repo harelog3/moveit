@@ -14,6 +14,7 @@ A **Go** rewrite of [mov-e-backend](https://github.com/Harel-ITESO/mov-e-backend
 | 📬 Email | [Mailpit](https://mailpit.axllent.org/) (local SMTP with a web UI) |
 | 🎞️ Movie data | [TMDB API](https://developer.themoviedb.org/) |
 | 🛠️ Task runner | [just](https://github.com/casey/just) |
+| 🐘 Migrations | [goose](https://pressly.github.io/goose/) |
 | 🖥️ Frontend | Coming soon to this same repo |
 
 ## 🔄 Original vs. rewrite
@@ -34,15 +35,15 @@ A **Go** rewrite of [mov-e-backend](https://github.com/Harel-ITESO/mov-e-backend
 moveit/
 ├── Justfile          # 🛠️ Root of the project commands (loads the modules)
 ├── backend/          # 🐹 Go API + infrastructure docker-compose
-│   ├── api.just      # `just api ...` recipes
-│   ├── infra.just    # `just infra ...` recipes
+│   ├── just/         # just modules: api.just, db.just, infra.just
+│   ├── internal/db/migrations/  # goose SQL migrations
 │   └── cmd/api/      # API entrypoint
 └── frontend/  # 🖥️ (pending)
 ```
 
 ## 🚀 Getting started
 
-Requirements: Go, Docker and [just](https://github.com/casey/just).
+Requirements: Go, Docker, [just](https://github.com/casey/just) and [goose](https://pressly.github.io/goose/) (`brew install goose`).
 
 ```bash
 # 1. Start the infrastructure (PostgreSQL, s3mock and Mailpit) 🐳
@@ -51,7 +52,10 @@ just infra up
 # 2. Set up the environment variables 🔐
 cp backend/.env.example backend/.env   # add your TMDB_API_KEY
 
-# 3. Run the API ▶️
+# 3. Apply the database migrations 🐘
+just db up
+
+# 4. Run the API ▶️
 just api run
 ```
 
@@ -77,6 +81,15 @@ Run `just` from the repo root to list every recipe. Recipes are grouped in modul
 | `just infra down` | Removes the containers and network (keeps data) |
 | `just infra destroy` | Removes containers, images, volumes and networks (⚠️ deletes the database data) |
 | `just infra reset` | `infra destroy` + `infra up` |
+| `just db new <name>` | Creates a SQL migration in `backend/internal/db/migrations` |
+| `just db up` | Applies every pending migration |
+| `just db up-one` | Applies only the next pending migration |
+| `just db down` | Rolls back the last migration |
+| `just db redo` | Rolls back the last migration and applies it again |
+| `just db reset` | Rolls back every migration (⚠️ deletes the database data) |
+| `just db status` | Shows applied and pending migrations |
+| `just db version` | Prints the current database version |
+| `just db validate` | Checks the migration files without touching the database |
 
 ## 🗃️ Data model
 
