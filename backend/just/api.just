@@ -1,4 +1,7 @@
-# 🚀 Go API recipes. They run from backend/ (this file's directory).
+# 🚀 Go API recipes.
+
+# Module recipes run from this file's directory (backend/just/), so move up to backend/.
+set working-directory := '..'
 
 # Binary name and path (relative to backend/)
 bin := "bin/moveit"
