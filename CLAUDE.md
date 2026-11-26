@@ -26,11 +26,18 @@ Monorepo:
 
 ## Commands
 
-Run from `backend/`:
+Common tasks are `just` recipes in the root `Justfile` (`just` lists them). Run them from the repo root:
 
 ```bash
-docker compose up -d          # start Postgres, s3mock, Mailpit
-go run .                      # run the API (reads .env / environment)
+just infra-up                 # start Postgres, s3mock, Mailpit
+just run                      # run the API (cmd/api), loading backend/.env
+just build                    # build the binary into backend/bin/moveit
+just exec                     # run the built binary, loading backend/.env
+```
+
+Checks, run from `backend/`:
+
+```bash
 go build ./... && go vet ./...
 go test ./...
 gofmt -l .                    # must print nothing
@@ -47,6 +54,12 @@ gofmt -l .                    # must print nothing
 - Write schema changes as SQL migrations. Never mutate the schema ad hoc.
 - Write table-driven tests with `testing`. Test handlers with `httptest`.
 - Validate request input explicitly (the original relied on class-validator with whitelist and forbidNonWhitelisted, so reject unknown JSON fields).
+
+## Language and documentation
+
+- Everything written into the repo is in English: code comments, log and error messages, script and recipe output, docs (README, CLAUDE.md) and commit messages. This holds even when the conversation is in another language.
+- Comment what isn't obvious from the code (why, constraints, gotchas). Skip comments that restate the code.
+- Keep the README and CLAUDE.md in sync when commands, setup steps or project structure change.
 
 ## API
 

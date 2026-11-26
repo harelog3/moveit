@@ -1,80 +1,97 @@
 # 🎬 MoveIT
 
-Reescritura en **Go** de [mov-e-backend](https://github.com/Harel-ITESO/mov-e-backend), un proyecto escolar inspirado en Letterboxd 🍿: los usuarios califican y comentan películas, dan like a reseñas, siguen a otros usuarios y arman su perfil con sus películas favoritas.
+A **Go** rewrite of [mov-e-backend](https://github.com/Harel-ITESO/mov-e-backend), a school project inspired by Letterboxd 🍿: users rate and review movies, like reviews, follow other users and build a profile with their favorite movies.
 
-> 🧪 Versión reducida y enfocada en el código: sin deploy, sin AWS y sin dockerizar la app (por ahora).
+> 🧪 A smaller, code-focused version: no deploy, no AWS and no dockerized app (for now).
 
 ## 🧱 Stack
 
-| Pieza | Tecnología |
+| Piece | Technology |
 | --- | --- |
 | 🐹 Backend | Go |
-| 🐘 Base de datos | PostgreSQL |
-| 🪣 Archivos (avatares) | [adobe/s3mock](https://github.com/adobe/S3Mock) (API compatible con S3) |
-| 📬 Correo | [Mailpit](https://mailpit.axllent.org/) (SMTP local con UI) |
-| 🎞️ Datos de películas | [TMDB API](https://developer.themoviedb.org/) |
-| 🖥️ Frontend | Próximamente en este mismo repo |
+| 🐘 Database | PostgreSQL |
+| 🪣 Files (avatars) | [adobe/s3mock](https://github.com/adobe/S3Mock) (S3-compatible API) |
+| 📬 Email | [Mailpit](https://mailpit.axllent.org/) (local SMTP with a web UI) |
+| 🎞️ Movie data | [TMDB API](https://developer.themoviedb.org/) |
+| 🛠️ Task runner | [just](https://github.com/casey/just) |
+| 🖥️ Frontend | Coming soon to this same repo |
 
-## 🔄 Original vs. reescritura
+## 🔄 Original vs. rewrite
 
 | Original (NestJS) | MoveIT (Go) |
 | --- | --- |
 | NestJS + TypeScript | Go 🐹 |
-| Prisma ORM | SQL + migraciones |
-| Redis para sesiones y caché | PostgreSQL / memoria |
-| DynamoDB para verificación de email | Tabla en PostgreSQL |
+| Prisma ORM | SQL + migrations |
+| Redis for sessions and cache | PostgreSQL / in-memory |
+| DynamoDB for email verification | PostgreSQL table |
 | Localstack (S3, SES, DynamoDB) | s3mock |
 | Brevo (SMTP) | Mailpit |
-| AWS ECS + Dockerfile + GitHub Actions | ❌ Fuera de alcance por ahora |
+| AWS ECS + Dockerfile + GitHub Actions | ❌ Out of scope for now |
 
-## 📁 Estructura
+## 📁 Structure
 
 ```
 moveit/
-├── backend/   # 🐹 API en Go + docker-compose de infraestructura
-└── frontend/  # 🖥️ (pendiente)
+├── Justfile   # 🛠️ Project commands
+├── backend/   # 🐹 Go API + infrastructure docker-compose
+│   └── cmd/api/   # API entrypoint
+└── frontend/  # 🖥️ (pending)
 ```
 
-## 🚀 Cómo correrlo
+## 🚀 Getting started
 
-Requisitos: Go y Docker.
+Requirements: Go, Docker and [just](https://github.com/casey/just).
 
 ```bash
-cd backend
+# 1. Start the infrastructure (PostgreSQL, s3mock and Mailpit) 🐳
+just infra-up
 
-# 1. Levanta la infraestructura (PostgreSQL, s3mock y Mailpit) 🐳
-docker compose up -d
+# 2. Set up the environment variables 🔐
+cp backend/.env.example backend/.env   # add your TMDB_API_KEY
 
-# 2. Configura las variables de entorno 🔐
-cp .env.example .env   # agrega tu TMDB_API_KEY
-
-# 3. Corre la API ▶️
-go run .
+# 3. Run the API ▶️
+just run
 ```
 
-| Servicio | URL |
+| Service | URL |
 | --- | --- |
 | 🐹 API | http://localhost:8080/v1/api |
-| 🐘 PostgreSQL | `localhost:5432` (usuario/contraseña/db: `moveit`) |
+| 🐘 PostgreSQL | `localhost:5432` (user/password/db: `moveit`) |
 | 🪣 s3mock | http://localhost:9090 (bucket `moveit`) |
-| 📬 Mailpit UI | http://localhost:8025 (SMTP en `:1025`) |
+| 📬 Mailpit UI | http://localhost:8025 (SMTP on `:1025`) |
 
-## 🗃️ Modelo de datos
+## 🛠️ Commands
 
-- 👤 **user**: username, email, contraseña (hash), nombre, ubicación, sitio web, bio, avatar y hasta 3 películas favoritas.
-- 🎞️ **movie**: se guarda solo cuando alguien interactúa con ella (id de TMDB, título, géneros, sinopsis, póster, año y duración).
-- ⭐ **rating**: calificación y comentario de un usuario a una película (una por usuario y película).
-- ❤️ **rating_like**: likes a las reseñas.
-- 🤝 **user_follow**: quién sigue a quién.
+Run `just` from the repo root to list every recipe.
+
+| Recipe | What it does |
+| --- | --- |
+| `just run` | Runs the API with `go run`, loading `backend/.env` |
+| `just build` | Builds the binary into `backend/bin/moveit` |
+| `just exec` | Runs the compiled binary, loading `backend/.env` |
+| `just get <pkg>` | Adds a Go package to the API |
+| `just infra-up` | Starts the containers |
+| `just infra-stop` | Stops the containers without removing them |
+| `just infra-down` | Removes the containers and network (keeps data) |
+| `just infra-destroy` | Removes containers, images, volumes and networks (⚠️ deletes the database data) |
+| `just infra-reset` | `infra-destroy` + `infra-up` |
+
+## 🗃️ Data model
+
+- 👤 **user**: username, email, password (hashed), name, location, website, bio, avatar and up to 3 favorite movies.
+- 🎞️ **movie**: stored only when someone interacts with it (TMDB id, title, genres, overview, poster, year and runtime).
+- ⭐ **rating**: a user's score and review for a movie (one per user and movie).
+- ❤️ **rating_like**: likes on reviews.
+- 🤝 **user_follow**: who follows whom.
 
 ## 🗺️ Roadmap
 
-- [ ] 🏗️ Base del proyecto (config, servidor HTTP, conexión a DB, migraciones)
-- [ ] 🔐 Autenticación (registro, login, sesiones) + ✉️ verificación de email
-- [ ] 👤 Usuarios y cuenta (editar datos, películas favoritas)
-- [ ] 🖼️ Archivos (subida de avatares a s3mock)
-- [ ] 🎞️ Películas (búsqueda y detalle vía TMDB)
-- [ ] ⭐ Calificaciones y ❤️ likes
+- [ ] 🏗️ Project foundation (config, HTTP server, DB connection, migrations)
+- [ ] 🔐 Authentication (sign up, login, sessions) + ✉️ email verification
+- [ ] 👤 Users and account (edit details, favorite movies)
+- [ ] 🖼️ Files (avatar uploads to s3mock)
+- [ ] 🎞️ Movies (search and details via TMDB)
+- [ ] ⭐ Ratings and ❤️ likes
 - [ ] 🤝 Follows
-- [ ] 🪪 Perfiles públicos
+- [ ] 🪪 Public profiles
 - [ ] 🖥️ Frontend
