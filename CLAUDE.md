@@ -26,13 +26,16 @@ Monorepo:
 
 ## Commands
 
-Common tasks are `just` recipes in the root `Justfile` (`just` lists them). Run them from the repo root:
+Common tasks are `just` recipes, run from the repo root (`just` lists them). The root `Justfile` only loads modules; each module file runs its recipes from its own directory:
+
+- `backend/api.just` → `just api <recipe>`
+- `backend/infra.just` → `just infra <recipe>`
 
 ```bash
-just infra-up                 # start Postgres, s3mock, Mailpit
-just run                      # run the API (cmd/api), loading backend/.env
-just build                    # build the binary into backend/bin/moveit
-just exec                     # run the built binary, loading backend/.env
+just infra up                 # start Postgres, s3mock, Mailpit
+just api run                  # run the API (cmd/api), loading backend/.env
+just api build                # build the binary into backend/bin/moveit
+just api exec                 # run the built binary, loading backend/.env
 ```
 
 Checks, run from `backend/`:
