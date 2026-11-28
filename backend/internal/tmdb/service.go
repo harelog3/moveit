@@ -1,6 +1,7 @@
 package tmdb
 
 import (
+	"context"
 	"encoding/json/v2"
 	"errors"
 	"fmt"
@@ -50,7 +51,7 @@ func NewService(apiKey string) *Service {
 
 // buildHTTPRequest builds a GET request to path under the TMDB base URL with
 // the auth and accept headers TMDB expects.
-func (s *Service) buildHTTPRequest(path string, params url.Values) (*http.Request, error) {
+func (s *Service) buildHTTPRequest(c context.Context, path string, params url.Values) (*http.Request, error) {
 	u, err := url.Parse(api)
 	if err != nil {
 		return nil, err
@@ -59,7 +60,7 @@ func (s *Service) buildHTTPRequest(path string, params url.Values) (*http.Reques
 	u = u.JoinPath(path)
 	u.RawQuery = params.Encode()
 
-	req, err := http.NewRequest("GET", u.String(), nil)
+	req, err := http.NewRequestWithContext(c, "GET", u.String(), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -74,10 +75,10 @@ func (s *Service) buildHTTPRequest(path string, params url.Values) (*http.Reques
 
 // SearchMoviesByTitle searches TMDB movies by title. Any non-2xx response is
 // reported as ErrNoTmdbSearchResults.
-func (s *Service) SearchMoviesByTitle(title string) ([]TmdbMovieSearch, error) {
+func (s *Service) SearchMoviesByTitle(c context.Context, title string) ([]TmdbMovieSearch, error) {
 	params := url.Values{}
 	params.Add("query", title)
-	req, err := s.buildHTTPRequest("/search/movie", params)
+	req, err := s.buildHTTPRequest(c, "/search/movie", params)
 	if err != nil {
 		return nil, err
 	}
@@ -104,10 +105,10 @@ func (s *Service) SearchMoviesByTitle(title string) ([]TmdbMovieSearch, error) {
 
 // GetMovieDetailByID fetches the English details of the TMDB movie with the
 // given id. Any non-2xx response is reported as ErrTmdbDetailNotFound.
-func (s *Service) GetMovieDetailByID(id int) (*TmdbMovieDetail, error) {
+func (s *Service) GetMovieDetailByID(c context.Context, id int) (*TmdbMovieDetail, error) {
 	params := url.Values{}
 	params.Add("language", "en-US")
-	req, err := s.buildHTTPRequest("/movie/"+strconv.Itoa(id), params)
+	req, err := s.buildHTTPRequest(c, "/movie/"+strconv.Itoa(id), params)
 	if err != nil {
 		return nil, err
 	}

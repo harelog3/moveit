@@ -3,6 +3,9 @@ package main
 import (
 	"context"
 	"log"
+	"os"
+	"os/signal"
+	"syscall"
 
 	"github.com/harelog3/moveit/internal/config"
 	"github.com/harelog3/moveit/internal/db"
@@ -21,7 +24,10 @@ func main() {
 	// binary runs outside `just`. Real environment variables take precedence,
 	// and a missing file is fine because config.LoadEnv validates everything.
 	_ = godotenv.Load(".env")
-	ctx := context.Background()
+
+	// ctx is canceled on Ctrl+C or SIGTERM so in-flight work can shut down.
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	defer stop()
 
 	// env config
 	env, err := config.LoadEnv()
