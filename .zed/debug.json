@@ -1,0 +1,13 @@
+[
+  {
+    "label": "Backend: API (Delve)",
+    "adapter": "Delve",
+    "request": "launch",
+    "mode": "debug",
+    // Delve builds this package; cwd must be backend/ because go.mod lives there.
+    "program": "$ZED_WORKTREE_ROOT/backend/cmd/api",
+    "cwd": "$ZED_WORKTREE_ROOT/backend",
+    // Same env as `just api run`. Zed parses it itself (Delve ignores envFile).
+    "envFile": "$ZED_WORKTREE_ROOT/backend/.env"
+  }
+]
