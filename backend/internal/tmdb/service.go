@@ -17,7 +17,16 @@ import (
 var (
 	ErrNoTmdbSearchResults = errors.New("TMDB returned 0 results for the given title")
 	ErrTmdbDetailNotFound  = errors.New("TMDB with given id was not found")
+	// ErrTmdbUnexpectedStatus covers every non-2xx response that isn't a known
+	// domain error (bad API key, rate limit, TMDB outage). The returned error
+	// wraps it and includes the status.
+	ErrTmdbUnexpectedStatus = errors.New("TMDB returned an unexpected status")
 )
+
+// unexpectedStatus returns an ErrTmdbUnexpectedStatus error carrying res's status.
+func unexpectedStatus(res *http.Response) error {
+	return fmt.Errorf("%w: %s", ErrTmdbUnexpectedStatus, res.Status)
+}
 
 // api is the TMDB v3 base URL. Requests authenticate with a v4 read access
 // token sent as a Bearer header, not with the api_key query parameter.
@@ -54,7 +63,7 @@ func NewService(apiKey string) *Service {
 func (s *Service) buildHTTPRequest(c context.Context, path string, params url.Values) (*http.Request, error) {
 	u, err := url.Parse(api)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("parsing tmdb base url: %w", err)
 	}
 
 	u = u.JoinPath(path)
@@ -62,74 +71,111 @@ func (s *Service) buildHTTPRequest(c context.Context, path string, params url.Va
 
 	req, err := http.NewRequestWithContext(c, "GET", u.String(), nil)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("creating tmdb request: %w", err)
 	}
 
 	req.Header.Add("Accept", "application/json")
-	req.Header.Add("Content-Type", "application/json")
 	req.Header.Add("Authorization", "Bearer "+s.apiKey)
 	req.Header.Add("User-Agent", "moveitapi/1.0")
 
 	return req, nil
 }
 
-// SearchMoviesByTitle searches TMDB movies by title. Any non-2xx response is
-// reported as ErrNoTmdbSearchResults.
-func (s *Service) SearchMoviesByTitle(c context.Context, title string) ([]TmdbMovieSearch, error) {
-	params := url.Values{}
-	params.Add("query", title)
-	req, err := s.buildHTTPRequest(c, "/search/movie", params)
+func (s *Service) GetPopularMovies(c context.Context) ([]TmdbMovieSearch, error) {
+	const errorContext = "getting tmdb popular movies: %w"
+	req, err := s.buildHTTPRequest(c, "/movie/popular", nil)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf(errorContext, err)
 	}
 
 	res, err := s.client.Do(req)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf(errorContext, err)
+	}
+
+	if !httpx.IsSuccessStatus(res) {
+		return nil, unexpectedStatus(res)
+	}
+
+	var result TmdbMovieSearchQuery
+
+	err = json.UnmarshalRead(res.Body, &result)
+
+	if err != nil {
+		return nil, fmt.Errorf(errorContext, err)
+	}
+
+	return result.Results, nil
+}
+
+// SearchMoviesByTitle searches TMDB movies by title. It returns
+// ErrNoTmdbSearchResults when nothing matches and an ErrTmdbUnexpectedStatus
+// error for any non-2xx response.
+func (s *Service) SearchMoviesByTitle(c context.Context, title string) ([]TmdbMovieSearch, error) {
+	const errorContext = "searching tmdb movies: %w"
+
+	params := url.Values{}
+	params.Add("query", title)
+	req, err := s.buildHTTPRequest(c, "/search/movie", params)
+	if err != nil {
+		return nil, fmt.Errorf(errorContext, err)
+	}
+
+	res, err := s.client.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf(errorContext, err)
 	}
 	defer res.Body.Close()
 
 	if !httpx.IsSuccessStatus(res) {
-		fmt.Println(res.Status)
-		return nil, ErrNoTmdbSearchResults
+		return nil, fmt.Errorf(errorContext, unexpectedStatus(res))
 	}
 	var query TmdbMovieSearchQuery
 
 	err = json.UnmarshalRead(res.Body, &query)
 
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf(errorContext, err)
+	}
+	// TMDB answers a search with no matches with 200 and empty results.
+	if len(query.Results) == 0 {
+		return nil, ErrNoTmdbSearchResults
 	}
 	return query.Results, nil
 }
 
 // GetMovieDetailByID fetches the English details of the TMDB movie with the
-// given id. Any non-2xx response is reported as ErrTmdbDetailNotFound.
+// given id. It returns ErrTmdbDetailNotFound on a 404 and an
+// ErrTmdbUnexpectedStatus error for any other non-2xx response.
 func (s *Service) GetMovieDetailByID(c context.Context, id int) (*TmdbMovieDetail, error) {
+	const errorContext = "getting tmdb movie %d: %w"
 	params := url.Values{}
 	params.Add("language", "en-US")
 	req, err := s.buildHTTPRequest(c, "/movie/"+strconv.Itoa(id), params)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf(errorContext, id, err)
 	}
 
 	res, err := s.client.Do(req)
 
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf(errorContext, id, err)
 	}
 
 	defer res.Body.Close()
 
-	if !httpx.IsSuccessStatus(res) {
+	if res.StatusCode == http.StatusNotFound {
 		return nil, ErrTmdbDetailNotFound
+	}
+	if !httpx.IsSuccessStatus(res) {
+		return nil, fmt.Errorf(errorContext, id, unexpectedStatus(res))
 	}
 
 	query := TmdbMovieDetail{}
 	err = json.UnmarshalRead(res.Body, &query)
 
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf(errorContext, id, err)
 	}
 	return &query, nil
 }
